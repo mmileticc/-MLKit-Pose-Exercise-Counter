@@ -18,10 +18,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
 import dev.milinko.workoutapp.ui.ExerciseScreen
 import dev.milinko.workoutapp.ui.HomeScreen
 import dev.milinko.workoutapp.ui.StatisticsScreen
 import dev.milinko.workoutapp.ui.navigation.Screen
+import dev.milinko.workoutapp.viewmodel.ExerciseViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val screens = listOf(Screen.Home, Screen.Training, Screen.Statistics)
+            val viewModel: ExerciseViewModel = hiltViewModel()
 
             Scaffold(
                 bottomBar = {
@@ -80,15 +83,18 @@ class MainActivity : ComponentActivity() {
                     Modifier.padding(innerPadding)
                 ) {
                     composable(Screen.Home.route) {
-                        HomeScreen(onStartTraining = {
-                            navController.navigate(Screen.Training.route)
-                        })
+                        HomeScreen(
+                            onStartTraining = {
+                                navController.navigate(Screen.Training.route)
+                            },
+                            viewModel = viewModel
+                        )
                     }
                     composable(Screen.Training.route) {
-                        ExerciseScreen()
+                        ExerciseScreen(viewModel = viewModel)
                     }
                     composable(Screen.Statistics.route) {
-                        StatisticsScreen()
+                        StatisticsScreen(viewModel = viewModel)
                     }
                 }
             }

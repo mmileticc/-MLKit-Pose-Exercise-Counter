@@ -12,7 +12,7 @@ import dev.milinko.workoutapp.db.daos.ExerciseDao
 import dev.milinko.workoutapp.db.entitys.Exercise
 import dev.milinko.workoutapp.exercise.PullUpAnalyzer
 import dev.milinko.workoutapp.exercise.PushUpAnalyzer
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

@@ -4,7 +4,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.milinko.workoutapp.exercise.ExerciseAnalyzer
 import dev.milinko.workoutapp.exercise.PullUpAnalyzer
 import dev.milinko.workoutapp.exercise.PushUpAnalyzer
 import dev.milinko.workoutapp.pose.PoseDetectorProcessor

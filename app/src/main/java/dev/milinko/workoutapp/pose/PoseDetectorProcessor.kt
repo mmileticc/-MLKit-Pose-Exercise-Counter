@@ -27,6 +27,7 @@ class PoseDetectorProcessor {
         detector.process(inputImage)
             .addOnSuccessListener { pose ->
                 val landmarks = pose.allPoseLandmarks.associateBy { it.landmarkType }
+                // Možemo kasnije dodati i PoseWorldLandmarks ako ExerciseAnalyzer bude zahtevao
                 onResult(landmarks)
             }
             .addOnFailureListener {

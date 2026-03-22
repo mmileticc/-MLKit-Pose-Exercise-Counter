@@ -15,12 +15,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import dev.milinko.workoutapp.camera.CameraPreview
 import dev.milinko.workoutapp.viewmodel.ExerciseViewModel
 import dev.milinko.workoutapp.db.entitys.Exercise
@@ -100,7 +99,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
             }
 
             // Upozorenje ako korisnik nije u frejmu ili se ne vidi celo telo
-            if (isSessionActive && (state.visibilityMessage != null || !state.isUserInFrame)) {
+            if (isSessionActive && state.visibilityMessage != null && !state.areHandsFixed) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -110,21 +109,23 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                            .padding(16.dp)
+                            .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(12.dp))
+                            .padding(24.dp)
+                            .border(2.dp, if (!state.isUserInFrame) Color.Red else Color.Black, RoundedCornerShape(12.dp))
                     ) {
                         Icon(
                             Icons.Default.Warning,
                             contentDescription = null,
-                            tint = if (!state.isUserInFrame) Color.Red else Color.Yellow,
-                            modifier = Modifier.size(48.dp)
+                            tint = if (!state.isUserInFrame) Color.Red else Color.DarkGray,
+                            modifier = Modifier.size(64.dp)
                         )
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(12.dp))
                         Text(
-                            state.visibilityMessage ?: "STANI U KADAR",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
+                            text = state.visibilityMessage ?: "STANI U KADAR",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 28.sp,
+                            lineHeight = 34.sp,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
@@ -145,7 +146,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
             // Glavni brojač
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = exerciseType.uppercase(),
+                    text = if (exerciseType == "Push Ups") "SKLEKOVI" else "ZGIBOVI",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -187,12 +188,37 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                     Text(
                         text = "${state.currentAngle.toInt()}°",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = if (exerciseType == "Push Ups") MaterialTheme.colorScheme.primary else Color.Cyan
                     )
                     Text(
                         text = "UGAO LAKTA",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
+                    )
+                }
+            }
+
+            // Dodatne informacije o stabilnosti šaka za zgibove
+            if (exerciseType == "Pull Ups" && isSessionActive) {
+                Surface(
+                    color = if (state.visibilityMessage?.contains("UMIRI ŠAKE") == true)
+                        Color.Yellow.copy(alpha = 0.2f) else Color.Green.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = if (state.visibilityMessage?.contains("UMIRI ŠAKE") == true)
+                            "STABILIZACIJA ŠAKA U TOKU${state.visibilityMessage?.substringAfter("ŠIPCI") ?: ""}"
+                        else "ŠAKE FIKSIRANE",
+                        color = if (state.visibilityMessage?.contains("UMIRI ŠAKE") == true)
+                            Color(0xFF8B8000) else Color(0xFF006400),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
             }

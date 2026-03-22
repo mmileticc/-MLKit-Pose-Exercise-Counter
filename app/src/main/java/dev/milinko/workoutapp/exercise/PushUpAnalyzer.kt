@@ -5,12 +5,14 @@ import kotlin.math.acos
 import kotlin.math.sqrt
 
 class PushUpAnalyzer : ExerciseAnalyzer {
-    private var lastDown = false
     private var count = 0
+    private var isUp = true // Stanje: Gore (ruke opružene)
     private val angleBuffer = mutableListOf<Double>()
     private val BUFFER_SIZE = 8 // Povećavamo buffer za bolju stabilnost
     private var lastSmoothAngle = 0.0
     private val ALPHA = 0.2 // Faktor za Exponential Moving Average (EMA)
+
+    private var initialShoulderWristDist: Float? = null
 
     override fun analyze(poseLandmarks: Map<Int, PoseLandmark>): ExerciseResult {
         val leftShoulder = poseLandmarks[PoseLandmark.LEFT_SHOULDER]
@@ -38,7 +40,14 @@ class PushUpAnalyzer : ExerciseAnalyzer {
         // Minimalni uslov za brojanje: Rame, lakat i zglob ruke
         val hasArms = shoulder != null && elbow != null && wrist != null
         if (!hasArms) {
-            return ExerciseResult(count, false, 0.0, isUserInFrame = false, visibilityMessage = "STANI U KADAR (RUKE)")
+            return ExerciseResult(
+                count = count,
+                isCorrectForm = false,
+                currentAngle = 0.0,
+                isUserInFrame = false,
+                visibilityMessage = "STANI U KADAR (RUKE)",
+                areHandsFixed = false
+            )
         }
 
         // Provera da li se vidi donji deo tela (za preciznu formu)
@@ -63,11 +72,29 @@ class PushUpAnalyzer : ExerciseAnalyzer {
         }
         lastSmoothAngle = smoothAngle
 
-        if (smoothAngle < 75) {
-            lastDown = true
-        } else if (smoothAngle > 155 && lastDown) {
+        // Rastojanje rame-šaka (za proveru da li se telo zaista spušta ka podu/šakama)
+        val currentDist = sqrt(
+            Math.pow((shoulder.position.x - wrist.position.x).toDouble(), 2.0) +
+            Math.pow((shoulder.position.y - wrist.position.y).toDouble(), 2.0)
+        ).toFloat()
+
+        if (isUp && smoothAngle > 155) {
+            initialShoulderWristDist = currentDist
+        }
+
+        val distRatio = if (initialShoulderWristDist != null) currentDist / initialShoulderWristDist!! else 1.0f
+
+        // DETEKCIJA SKLEKA
+        // 1. Spuštanje (DOWN)
+        // Uslovi: Ugao < 75 stepeni I rame se približilo šaci za bar 25%
+        if (isUp && smoothAngle < 75 && distRatio < 0.75f) {
+            isUp = false
+        } 
+        // 2. Podizanje (UP) - Kraj ponavljanja
+        // Uslovi: Ugao > 155 stepeni I bili smo dole
+        else if (!isUp && smoothAngle > 155) {
             count++
-            lastDown = false
+            isUp = true
         }
 
         // Forma je "OK" ako je ugao u granicama, ali upozoravamo ako ne vidimo celo telo
@@ -76,15 +103,17 @@ class PushUpAnalyzer : ExerciseAnalyzer {
             isCorrectForm = smoothAngle in 60.0..180.0,
             currentAngle = smoothAngle,
             isUserInFrame = true,
-            visibilityMessage = visibilityMessage
+            visibilityMessage = visibilityMessage,
+            areHandsFixed = true // Uvek true za sklekove da ne bi izlazila poruka za stabilizaciju
         )
     }
 
     override fun reset() {
         count = 0
-        lastDown = false
+        isUp = true
         angleBuffer.clear()
         lastSmoothAngle = 0.0
+        initialShoulderWristDist = null
     }
 
     private fun calculateAngle(a: PoseLandmark, b: PoseLandmark, c: PoseLandmark): Double {
