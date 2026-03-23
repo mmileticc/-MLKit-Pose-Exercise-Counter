@@ -82,6 +82,8 @@ class ExerciseViewModel @Inject constructor(
             }
         }
         _showSummary.value = false
+        _isSessionActive.value = false
+        _uiState.value = ExerciseResult(0, true)
     }
 
     fun discardSession() {

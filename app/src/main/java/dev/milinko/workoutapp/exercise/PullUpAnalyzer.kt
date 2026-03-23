@@ -70,7 +70,7 @@ class PullUpAnalyzer : ExerciseAnalyzer {
                 isCorrectForm = false,
                 currentAngle = 0.0,
                 isUserInFrame = false,
-                visibilityMessage = "STANI U KADAR (RUKE I RAMENA)",
+                visibilityMessage = "GET IN FRAME (ARMS & SHOULDERS)",
                 areHandsFixed = false
             )
         }
@@ -130,7 +130,7 @@ class PullUpAnalyzer : ExerciseAnalyzer {
                 isCorrectForm = false,
                 currentAngle = 0.0,
                 isUserInFrame = true,
-                visibilityMessage = "UHVATI ŠIPKU I UMIRI ŠAKE$stabilityProgress",
+                visibilityMessage = "GRAB THE BAR AND KEEP HANDS STILL$stabilityProgress",
                 areHandsFixed = false
             )
         }
@@ -179,14 +179,21 @@ class PullUpAnalyzer : ExerciseAnalyzer {
         }
 
         var visibilityMessage: String? = null
-        if (!hasFullBody) {
-            visibilityMessage = if (!hasUpperBody) "STANI DALJE DA VIDIM KUKOVE" else null // Manje dosadnih poruka
+        if (!hasFullBody && !areHandsFixed) {
+            visibilityMessage = if (!hasUpperBody) "STAND FURTHER TO SEE HIPS" else null
         }
-        if (!hasStartedHanging && areHandsFixed) {
-            visibilityMessage = "SKROZ OPRAVI RUKE ZA POČETAK"
-        }
-        if (shoulder!!.position.y > (referenceWristY ?: wrist.position.y) && smoothAngle > 110) {
-            visibilityMessage = "ŠIPKA TREBA DA BUDE IZNAD GLAVE"
+        
+        // Prikazujemo uputstva samo dok sesija nije započeta
+        if (!hasStartedHanging) {
+            if (areHandsFixed) {
+                visibilityMessage = "FULLY EXTEND ARMS TO START"
+            }
+            
+            // Ova poruka je bila dosadna, sada je prikazujemo samo ako je drastično pogrešno 
+            // i ako serija još nije krenula kako treba (npr. pogrešan smer kamere)
+            if (shoulder!!.position.y > (referenceWristY ?: wrist.position.y) + 0.1f && smoothAngle > 120) {
+                visibilityMessage = "BAR SHOULD BE ABOVE HEAD"
+            }
         }
 
         return ExerciseResult(

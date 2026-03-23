@@ -45,7 +45,7 @@ class PushUpAnalyzer : ExerciseAnalyzer {
                 isCorrectForm = false,
                 currentAngle = 0.0,
                 isUserInFrame = false,
-                visibilityMessage = "STANI U KADAR (RUKE)",
+                visibilityMessage = "GET IN FRAME (ARMS)",
                 areHandsFixed = false
             )
         }
@@ -53,7 +53,7 @@ class PushUpAnalyzer : ExerciseAnalyzer {
         // Provera da li se vidi donji deo tela (za preciznu formu)
         val hasLowerBody = hip != null && knee != null
         val visibilityMessage = if (!hasLowerBody) {
-            "NE VIDIM CELO TELO (FORMA MOŽE BITI NEPRECIZNA)"
+            "FULL BODY NOT VISIBLE (FORM MAY BE INACCURATE)"
         } else null
 
         val angle = calculateAngle(shoulder!!, elbow!!, wrist!!)

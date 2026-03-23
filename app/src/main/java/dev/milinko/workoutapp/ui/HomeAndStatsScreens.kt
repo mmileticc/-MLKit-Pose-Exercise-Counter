@@ -28,16 +28,16 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
     if (showManualDialog) {
         AlertDialog(
             onDismissRequest = { showManualDialog = false },
-            title = { Text("Ručni unos vežbe") },
+            title = { Text("Manual log") },
             text = {
                 Column {
-                    val exerciseLabel = if (exerciseType == "Push Ups") "sklekova" else "zgibova"
-                    Text("Unesite broj urađenih $exerciseLabel:")
+                    val exerciseLabel = if (exerciseType == "Push Ups") "push-ups" else "pull-ups"
+                    Text("Enter the number of $exerciseLabel completed:")
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = manualReps,
                         onValueChange = { if (it.all { char -> char.isDigit() }) manualReps = it },
-                        label = { Text("Broj ponavljanja") },
+                        label = { Text("Repetitions") },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                         ),
@@ -57,12 +57,12 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
                     },
                     enabled = manualReps.isNotEmpty()
                 ) {
-                    Text("SAČUVAJ")
+                    Text("SAVE")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showManualDialog = false }) {
-                    Text("OTKAŽI")
+                    Text("CANCEL")
                 }
             }
         )
@@ -70,7 +70,7 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("WorkoutApp") })
+            TopAppBar(title = { Text("FitVision") })
         }
     ) { padding ->
         Column(
@@ -81,14 +81,14 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Dobrodošli nazad!",
+                text = "Welcome back!",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
             Text(
-                text = "Izaberite vežbu:",
+                text = "Choose an exercise:",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
@@ -103,7 +103,7 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
                     FilterChip(
                         selected = isSelected,
                         onClick = { viewModel.setExerciseType(type) },
-                        label = { Text(if (type == "Push Ups") "Sklekovi" else "Zgibovi") },
+                        label = { Text(if (type == "Push Ups") "Push Ups" else "Pull Ups") },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -118,7 +118,7 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
                     .height(56.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text("ZAPOČNI NOVI TRENING (KAMERA)", fontWeight = FontWeight.Bold)
+                Text("START CAMERA TRAINING", fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -130,13 +130,13 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
                     .height(56.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text("RUČNI UNOS VEŽBE", fontWeight = FontWeight.Bold)
+                Text("LOG REPS MANUALLY", fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Poslednji treninzi",
+                text = "Recent workouts",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.Start)
@@ -168,7 +168,7 @@ fun HomeScreen(onStartTraining: () -> Unit, viewModel: ExerciseViewModel = hiltV
                                 )
                             }
                             Text(
-                                text = "${exercise.numOf} ponavljanja",
+                                text = "${exercise.numOf} reps",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -191,7 +191,7 @@ fun StatisticsScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Statistika") })
+            TopAppBar(title = { Text("Stats") })
         }
     ) { padding ->
         Column(
@@ -205,12 +205,12 @@ fun StatisticsScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 StatCard(
-                    title = "Ukupno sklekova",
+                    title = "Total Reps",
                     value = totalPushups.toString(),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    title = "Broj treninga",
+                    title = "Workouts",
                     value = totalSessions.toString(),
                     modifier = Modifier.weight(1f)
                 )
@@ -219,7 +219,7 @@ fun StatisticsScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Sva istorija",
+                text = "History",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -231,7 +231,7 @@ fun StatisticsScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
             ) {
                 items(history) { exercise ->
                     ListItem(
-                        headlineContent = { Text("${exercise.numOf} sklekova") },
+                        headlineContent = { Text("${exercise.numOf} reps") },
                         supportingContent = { Text(dateFormat.format(exercise.date)) },
                         trailingContent = { Text(exercise.name) }
                     )

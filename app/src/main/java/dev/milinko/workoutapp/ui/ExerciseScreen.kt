@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
@@ -26,8 +27,9 @@ import dev.milinko.workoutapp.db.entitys.Exercise
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
+fun ExerciseScreen(onBack: () -> Unit, viewModel: ExerciseViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val landmarks by viewModel.landmarks.collectAsState()
     val isSessionActive by viewModel.isSessionActive.collectAsState()
@@ -35,33 +37,53 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
 
     val exerciseType by viewModel.currentExerciseType.collectAsState()
 
-    if (showSummary) {
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    if (showExitDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.discardSession() },
-            title = { Text("Pregled treninga") },
-            text = {
-                Column {
-                    val exerciseName = if (exerciseType == "Push Ups") "sklekova" else "zgibova"
-                    Text("Urađeno $exerciseName: ${state.count}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Da li želite da sačuvate ovaj rezultat u istoriju?")
-                }
-            },
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Exit Training?") },
+            text = { Text("Are you sure you want to stop the training session? Progress will not be saved.") },
             confirmButton = {
-                Button(onClick = { viewModel.saveSession() }) {
-                    Text("SAČUVAJ")
+                Button(
+                    onClick = {
+                        viewModel.discardSession()
+                        showExitDialog = false
+                        onBack()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("EXIT")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.discardSession() }) {
-                    Text("ODBACI", color = Color.Red)
+                TextButton(onClick = { showExitDialog = false }) {
+                    Text("CANCEL")
                 }
             }
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Gornja polovina: Vizuelni prikaz
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Training Session") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        if (isSessionActive) {
+                            showExitDialog = true
+                        } else {
+                            onBack()
+                        }
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Gornja polovina: Vizuelni prikaz
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,7 +120,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                 PoseOverlay(landmarks = landmarks, modifier = Modifier.fillMaxSize())
             }
 
-            // Upozorenje ako korisnik nije u frejmu ili se ne vidi celo telo
+            // Warning if user is not in frame or full body not visible
             if (isSessionActive && state.visibilityMessage != null && !state.areHandsFixed) {
                 Box(
                     modifier = Modifier
@@ -121,7 +143,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            text = state.visibilityMessage ?: "STANI U KADAR",
+                            text = state.visibilityMessage ?: "GET IN FRAME",
                             color = Color.Black,
                             fontWeight = FontWeight.Black,
                             fontSize = 28.sp,
@@ -133,7 +155,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
             }
         }
 
-        // Donja polovina: Informacije i kontrole
+        // Lower half: Info and controls
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -143,10 +165,10 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Glavni brojač
+            // Main counter
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (exerciseType == "Push Ups") "SKLEKOVI" else "ZGIBOVI",
+                    text = if (exerciseType == "Push Ups") "PUSH UPS" else "PULL UPS",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -160,13 +182,13 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                 )
             }
 
-            // Status forme i ugao
+            // Form status and angle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Forma
+                // Form
                 Surface(
                     color = if (state.isCorrectForm) Color.Green.copy(alpha = 0.1f) else Color.Red.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(12.dp),
@@ -176,14 +198,14 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                     )
                 ) {
                     Text(
-                        text = if (state.isCorrectForm) "FORMA OK" else "LOŠA FORMA",
+                        text = if (state.isCorrectForm) "FORM OK" else "BAD FORM",
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         fontWeight = FontWeight.Bold,
                         color = if (state.isCorrectForm) Color.Green else Color.Red
                     )
                 }
 
-                // Ugao
+                // Angle
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "${state.currentAngle.toInt()}°",
@@ -192,26 +214,27 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                         color = if (exerciseType == "Push Ups") MaterialTheme.colorScheme.primary else Color.Cyan
                     )
                     Text(
-                        text = "UGAO LAKTA",
+                        text = "ELBOW ANGLE",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
                 }
             }
 
-            // Dodatne informacije o stabilnosti šaka za zgibove
+            // Additional info about hands stability for pull-ups
             if (exerciseType == "Pull Ups" && isSessionActive) {
                 Surface(
-                    color = if (state.visibilityMessage?.contains("UMIRI ŠAKE") == true)
+                    color = if (state.visibilityMessage?.contains("STABILIZATION") == true || state.visibilityMessage?.contains("STEADY") == true)
                         Color.Yellow.copy(alpha = 0.2f) else Color.Green.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
+                    val isStabilizing = state.visibilityMessage?.contains("STABILIZATION") == true || state.visibilityMessage?.contains("STEADY") == true
                     Text(
-                        text = if (state.visibilityMessage?.contains("UMIRI ŠAKE") == true)
-                            "STABILIZACIJA ŠAKA U TOKU${state.visibilityMessage?.substringAfter("ŠIPCI") ?: ""}"
-                        else "ŠAKE FIKSIRANE",
-                        color = if (state.visibilityMessage?.contains("UMIRI ŠAKE") == true)
+                        text = if (isStabilizing)
+                            "HAND STABILIZATION IN PROGRESS${state.visibilityMessage?.substringAfter("%)")?.let { "" } ?: state.visibilityMessage?.substringAfter("HANDS") ?: ""}"
+                        else "HANDS FIXED",
+                        color = if (isStabilizing)
                             Color(0xFF8B8000) else Color(0xFF006400),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
@@ -223,7 +246,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                 }
             }
 
-            // Kontrole
+            // Controls
             if (!isSessionActive) {
                 Button(
                     onClick = { viewModel.startSession() },
@@ -234,7 +257,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("ZAPOČNI TRENING", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("START TRAINING", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             } else {
                 Button(
@@ -247,7 +270,7 @@ fun ExerciseScreen(viewModel: ExerciseViewModel = hiltViewModel()) {
                 ) {
                     Icon(Icons.Default.Stop, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("ZAVRŠI TRENING", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("FINISH TRAINING", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -284,4 +307,5 @@ fun HistoryRow(exercise: Exercise) {
             fontWeight = FontWeight.Black
         )
     }
+}
 }

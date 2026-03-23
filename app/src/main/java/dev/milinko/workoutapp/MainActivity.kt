@@ -91,7 +91,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable(Screen.Training.route) {
-                        ExerciseScreen(viewModel = viewModel)
+                        ExerciseScreen(
+                            onBack = { navController.popBackStack() },
+                            viewModel = viewModel
+                        )
                     }
                     composable(Screen.Statistics.route) {
                         StatisticsScreen(viewModel = viewModel)
